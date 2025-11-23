@@ -1,33 +1,53 @@
 import React, { useState, type FormEvent } from 'react';
-
-// If using React Router, uncomment the line below and replace <a> tags with <Link>
-// import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { authService } from '../services/AuthService'; // Ensure filename matches exactly (case sensitive)
 
 const Login: React.FC = () => {
-    // State for form inputs
+    const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e: FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        console.log('Login attempt:', { email, password });
-        // Add your login logic here (e.g., API call)
+        setError('');
+        setLoading(true);
+
+        try {
+            // 1. Call the Real API
+            const data = await authService.login({ email, password });
+
+            // 2. Save Token & User Info
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify({ name: data.fullName, email: data.email }));
+
+            // 3. Redirect to Feed
+            navigate('/feed');
+        } catch (err: any) {
+            console.error(err);
+            // Safely extract error message from API response if available
+            const errorMessage = err.response?.data || 'Login failed. Please check your credentials.';
+            setError(errorMessage);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
         <section className="_social_login_wrapper _layout_main_wrapper">
             {/* Background Shapes */}
             <div className="_shape_one">
-                <img src="assets/images/shape1.svg" alt="" className="_shape_img" />
-                <img src="assets/images/dark_shape.svg" alt="" className="_dark_shape" />
+                <img src="/assets/images/shape1.svg" alt="" className="_shape_img" />
+                <img src="/assets/images/dark_shape.svg" alt="" className="_dark_shape" />
             </div>
             <div className="_shape_two">
-                <img src="assets/images/shape2.svg" alt="" className="_shape_img" />
-                <img src="assets/images/dark_shape1.svg" alt="" className="_dark_shape _dark_shape_opacity" />
+                <img src="/assets/images/shape2.svg" alt="" className="_shape_img" />
+                <img src="/assets/images/dark_shape1.svg" alt="" className="_dark_shape _dark_shape_opacity" />
             </div>
             <div className="_shape_three">
-                <img src="assets/images/shape3.svg" alt="" className="_shape_img" />
-                <img src="assets/images/dark_shape2.svg" alt="" className="_dark_shape _dark_shape_opacity" />
+                <img src="/assets/images/shape3.svg" alt="" className="_shape_img" />
+                <img src="/assets/images/dark_shape2.svg" alt="" className="_dark_shape _dark_shape_opacity" />
             </div>
 
             <div className="_social_login_wrap">
@@ -37,7 +57,7 @@ const Login: React.FC = () => {
                         <div className="col-xl-8 col-lg-8 col-md-12 col-sm-12">
                             <div className="_social_login_left">
                                 <div className="_social_login_left_image">
-                                    <img src="assets/images/login.png" alt="Login Illustration" className="_left_img" />
+                                    <img src="/assets/images/login.png" alt="Login Illustration" className="_left_img" />
                                 </div>
                             </div>
                         </div>
@@ -46,19 +66,26 @@ const Login: React.FC = () => {
                         <div className="col-xl-4 col-lg-4 col-md-12 col-sm-12">
                             <div className="_social_login_content">
                                 <div className="_social_login_left_logo _mar_b28">
-                                    <img src="assets/images/logo.svg" alt="Logo" className="_left_logo" />
+                                    <img src="/assets/images/logo.svg" alt="Logo" className="_left_logo" />
                                 </div>
                                 <p className="_social_login_content_para _mar_b8">Welcome back</p>
                                 <h4 className="_social_login_content_title _titl4 _mar_b50">Login to your account</h4>
 
                                 <button type="button" className="_social_login_content_btn _mar_b40">
-                                    <img src="assets/images/google.svg" alt="Google" className="_google_img" />
+                                    <img src="/assets/images/google.svg" alt="Google" className="_google_img" />
                                     <span>Or sign-in with google</span>
                                 </button>
 
                                 <div className="_social_login_content_bottom_txt _mar_b40">
                                     <span>Or</span>
                                 </div>
+
+                                {/* ERROR MESSAGE DISPLAY */}
+                                {error && (
+                                    <div className="alert alert-danger _mar_b14" role="alert">
+                                        {error}
+                                    </div>
+                                )}
 
                                 <form className="_social_login_form" onSubmit={handleSubmit}>
                                     <div className="row">
@@ -93,10 +120,8 @@ const Login: React.FC = () => {
                                             <div className="form-check _social_login_form_check">
                                                 <input
                                                     className="form-check-input _social_login_form_check_input"
-                                                    type="radio"
-                                                    name="flexRadioDefault"
+                                                    type="checkbox" // Changed to checkbox
                                                     id="flexRadioDefault2"
-                                                    defaultChecked
                                                 />
                                                 <label className="form-check-label _social_login_form_check_label" htmlFor="flexRadioDefault2">
                                                     Remember me
@@ -113,8 +138,13 @@ const Login: React.FC = () => {
                                     <div className="row">
                                         <div className="col-lg-12 col-md-12 col-xl-12 col-sm-12">
                                             <div className="_social_login_form_btn _mar_t40 _mar_b60">
-                                                <button type="submit" className="_social_login_form_btn_link _btn1">
-                                                    Login now
+                                                <button
+                                                    type="submit"
+                                                    className="_social_login_form_btn_link _btn1"
+                                                    disabled={loading}
+                                                    style={{ width: '100%', border: 'none' }}
+                                                >
+                                                    {loading ? 'Logging in...' : 'Login now'}
                                                 </button>
                                             </div>
                                         </div>
@@ -125,7 +155,7 @@ const Login: React.FC = () => {
                                     <div className="col-xl-12 col-lg-12 col-md-12 col-sm-12">
                                         <div className="_social_login_bottom_txt">
                                             <p className="_social_login_bottom_txt_para">
-                                                Dont have an account? <a href="registration">Create New Account</a>
+                                                Dont have an account? <Link to="/register">Create New Account</Link>
                                             </p>
                                         </div>
                                     </div>

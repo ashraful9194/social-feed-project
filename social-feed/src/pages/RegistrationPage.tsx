@@ -1,41 +1,74 @@
 import React, { useState, type FormEvent } from 'react';
-
-// If using React Router, uncomment the line below and replace <a> tags with <Link>
-// import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { authService } from '../services/AuthService'; // Ensure case sensitivity (authService.ts)
 
 const Registration: React.FC = () => {
+    const navigate = useNavigate();
+
     // State for form inputs
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [repeatPassword, setRepeatPassword] = useState('');
-    const [agreed, setAgreed] = useState(true);
+    const [agreed, setAgreed] = useState(false); // Default false
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e: FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
+        setError('');
+
         if (password !== repeatPassword) {
-            alert("Passwords do not match!");
+            setError("Passwords do not match!");
             return;
         }
-        console.log('Registration attempt:', { firstName, lastName, email, password, agreed });
-        // Add registration logic here
+
+        if (!agreed) {
+            setError("You must agree to the terms and conditions.");
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            // 1. Call the Real API
+            const data = await authService.register({
+                firstName,
+                lastName,
+                email,
+                password
+            });
+
+            // 2. Save Token & User Info (Auto-login)
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify({ name: data.fullName, email: data.email }));
+
+            // 3. Redirect to Feed
+            navigate('/feed');
+        } catch (err: any) {
+            console.error(err);
+            const errorMessage = err.response?.data || 'Registration failed. Please try again.';
+            setError(errorMessage);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
         <section className="_social_registration_wrapper _layout_main_wrapper">
             {/* Background Shapes */}
             <div className="_shape_one">
-                <img src="assets/images/shape1.svg" alt="" className="_shape_img" />
-                <img src="assets/images/dark_shape.svg" alt="" className="_dark_shape" />
+                <img src="/assets/images/shape1.svg" alt="" className="_shape_img" />
+                <img src="/assets/images/dark_shape.svg" alt="" className="_dark_shape" />
             </div>
             <div className="_shape_two">
-                <img src="assets/images/shape2.svg" alt="" className="_shape_img" />
-                <img src="assets/images/dark_shape1.svg" alt="" className="_dark_shape _dark_shape_opacity" />
+                <img src="/assets/images/shape2.svg" alt="" className="_shape_img" />
+                <img src="/assets/images/dark_shape1.svg" alt="" className="_dark_shape _dark_shape_opacity" />
             </div>
             <div className="_shape_three">
-                <img src="assets/images/shape3.svg" alt="" className="_shape_img" />
-                <img src="assets/images/dark_shape2.svg" alt="" className="_dark_shape _dark_shape_opacity" />
+                <img src="/assets/images/shape3.svg" alt="" className="_shape_img" />
+                <img src="/assets/images/dark_shape2.svg" alt="" className="_dark_shape _dark_shape_opacity" />
             </div>
 
             <div className="_social_registration_wrap">
@@ -45,10 +78,10 @@ const Registration: React.FC = () => {
                         <div className="col-xl-8 col-lg-8 col-md-12 col-sm-12">
                             <div className="_social_registration_right">
                                 <div className="_social_registration_right_image">
-                                    <img src="assets/images/registration.png" alt="Registration Illustration" />
+                                    <img src="/assets/images/registration.png" alt="Registration Illustration" />
                                 </div>
                                 <div className="_social_registration_right_image_dark">
-                                    <img src="assets/images/registration1.png" alt="Registration Dark Mode" />
+                                    <img src="/assets/images/registration1.png" alt="Registration Dark Mode" />
                                 </div>
                             </div>
                         </div>
@@ -57,19 +90,26 @@ const Registration: React.FC = () => {
                         <div className="col-xl-4 col-lg-4 col-md-12 col-sm-12">
                             <div className="_social_registration_content">
                                 <div className="_social_registration_right_logo _mar_b28">
-                                    <img src="assets/images/logo.svg" alt="Logo" className="_right_logo" />
+                                    <img src="/assets/images/logo.svg" alt="Logo" className="_right_logo" />
                                 </div>
                                 <p className="_social_registration_content_para _mar_b8">Get Started Now</p>
                                 <h4 className="_social_registration_content_title _titl4 _mar_b50">Registration</h4>
 
                                 <button type="button" className="_social_registration_content_btn _mar_b40">
-                                    <img src="assets/images/google.svg" alt="Google" className="_google_img" />
+                                    <img src="/assets/images/google.svg" alt="Google" className="_google_img" />
                                     <span>Register with google</span>
                                 </button>
 
                                 <div className="_social_registration_content_bottom_txt _mar_b40">
                                     <span>Or</span>
                                 </div>
+
+                                {/* ERROR MESSAGE */}
+                                {error && (
+                                    <div className="alert alert-danger _mar_b14" role="alert">
+                                        {error}
+                                    </div>
+                                )}
 
                                 <form className="_social_registration_form" onSubmit={handleSubmit}>
                                     <div className="row">
@@ -143,8 +183,7 @@ const Registration: React.FC = () => {
                                             <div className="form-check _social_registration_form_check">
                                                 <input
                                                     className="form-check-input _social_registration_form_check_input"
-                                                    type="radio"
-                                                    name="flexRadioDefault"
+                                                    type="checkbox" // Checkbox is appropriate here
                                                     id="flexRadioDefault2"
                                                     checked={agreed}
                                                     onChange={() => setAgreed(!agreed)}
@@ -159,13 +198,13 @@ const Registration: React.FC = () => {
                                     <div className="row">
                                         <div className="col-lg-12 col-md-12 col-xl-12 col-sm-12">
                                             <div className="_social_registration_form_btn _mar_t40 _mar_b60">
-                                                {/* Added whiteSpace: 'nowrap' to prevent line breaking */}
                                                 <button
                                                     type="submit"
                                                     className="_social_registration_form_btn_link _btn1"
-                                                    style={{ whiteSpace: 'nowrap' }}
+                                                    style={{ whiteSpace: 'nowrap', width: '100%', border: 'none' }}
+                                                    disabled={loading}
                                                 >
-                                                    Register now
+                                                    {loading ? 'Registering...' : 'Register now'}
                                                 </button>
                                             </div>
                                         </div>
@@ -176,7 +215,7 @@ const Registration: React.FC = () => {
                                     <div className="col-xl-12 col-lg-12 col-md-12 col-sm-12">
                                         <div className="_social_registration_bottom_txt">
                                             <p className="_social_registration_bottom_txt_para">
-                                                Already have an account? <a href="login">Login</a>
+                                                Already have an account? <Link to="/login">Login</Link>
                                             </p>
                                         </div>
                                     </div>
