@@ -37,7 +37,8 @@ const Navbar: React.FC = () => {
                                 <circle cx="7" cy="7" r="6" stroke="#666" />
                                 <path stroke="#666" strokeLinecap="round" d="M16 16l-3-3" />
                             </svg>
-                            <input className="form-control me-2 _inpt1" type="search" placeholder="input search text" aria-label="Search" />
+                            <input className="form-control me-2 _inpt1" type="search" placeholder="input search text"
+                                   aria-label="Search"/>
                         </form>
                     </div>
 
