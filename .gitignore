@@ -1,0 +1,15 @@
+# Build Results
+[Bb]in/
+[Oo]bj/
+
+# Mac System Files
+.DS_Store
+
+# IDE Files
+.idea/
+.vscode/
+*.user
+*.suo
+
+# Environment Config (Optional but recommended)
+appsettings.Development.json
