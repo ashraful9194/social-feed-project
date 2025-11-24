@@ -4,6 +4,7 @@ import { postService } from '../../services/PostService';
 import { formatTimeAgo } from '../../utils/dateUtils';
 import { getErrorMessage } from '../../utils/errorHandler';
 import { DEFAULT_AVATAR } from '../../config/constants';
+import { useAuth } from '../../hooks/useAuth';
 
 interface PostCardProps {
     post: PostResponse;
@@ -37,6 +38,9 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     const [error, setError] = useState<string | null>(null);
     const [postLikesMeta, setPostLikesMeta] = useState<LikeHoverMeta>(createEmptyLikeMeta());
     const [commentLikesMeta, setCommentLikesMeta] = useState<Record<number, LikeHoverMeta>>({});
+    const { getUser, getUserAvatar } = useAuth();
+    const currentUser = getUser();
+    const currentUserAvatar = getUserAvatar();
 
     const hasLoadedComments = useMemo(() => comments.length > 0, [comments]);
 
@@ -341,7 +345,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                     
                     {/* Avatar */}
                     <img 
-                        src={comment.authorAvatar ?? '/assets/images/txt_img.png'} 
+                        src={comment.authorAvatar ?? DEFAULT_AVATAR} 
                         alt={comment.authorName} 
                         style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} 
                     />
@@ -433,8 +437,8 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 {replyDrafts[comment.id] !== undefined && (
                     <div style={{ display: 'flex', gap: 8, marginTop: 8, paddingLeft: 40 }}>
                          <img 
-                            src="/assets/images/profile.png" // Placeholder for current user avatar
-                            alt="Me" 
+                            src={currentUserAvatar}
+                            alt={currentUser?.name ?? 'You'} 
                             style={{ width: 24, height: 24, borderRadius: '50%' }} 
                         />
                         <div style={{ flex: 1 }}>
@@ -478,7 +482,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 <div className="_feed_inner_timeline_post_top">
                     <div className="_feed_inner_timeline_post_box">
                         <div className="_feed_inner_timeline_post_box_image">
-                            <img src={post.authorAvatar ?? '/assets/images/post_img.png'} alt="" className="_post_img" />
+                            <img src={post.authorAvatar ?? DEFAULT_AVATAR} alt="" className="_post_img" />
                         </div>
                         <div className="_feed_inner_timeline_post_box_txt">
                             <h4 className="_feed_inner_timeline_post_box_title">{post.authorName}</h4>
@@ -539,7 +543,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                     <div className="_feed_inner_comment_box" style={{ alignItems: 'flex-start' }}>
                         <div className="_feed_inner_comment_box_content" style={{ width: '100%' }}>
                             <div className="_feed_inner_comment_box_content_image">
-                                <img src="/assets/images/comment_img.png" alt="" className="_comment_img" style={{ width: 32, height: 32, borderRadius: '50%' }} />
+                                <img src={currentUserAvatar} alt={currentUser?.name ?? 'You'} className="_comment_img" style={{ width: 32, height: 32, borderRadius: '50%' }} />
                             </div>
                             <div className="_feed_inner_comment_box_content_txt" style={{ flex: 1 }}>
                                 <input

@@ -4,13 +4,14 @@
 
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { STORAGE_KEYS, ROUTES } from '../config/constants';
+import { STORAGE_KEYS, ROUTES, DEFAULT_AVATAR } from '../config/constants';
 import { authService } from '../services/AuthService';
 import { getErrorMessage } from '../utils/errorHandler';
 
 interface User {
     name: string;
     email: string;
+    avatarUrl?: string | null;
 }
 
 export const useAuth = () => {
@@ -29,6 +30,11 @@ export const useAuth = () => {
             return null;
         }
     }, []);
+
+    const getUserAvatar = useCallback((): string => {
+        const user = getUser();
+        return user?.avatarUrl ?? DEFAULT_AVATAR;
+    }, [getUser]);
 
     const isAuthenticated = useCallback((): boolean => {
         return getToken() !== null;
@@ -51,6 +57,7 @@ export const useAuth = () => {
     return {
         getToken,
         getUser,
+        getUserAvatar,
         isAuthenticated,
         logout,
         handleAuthError,

@@ -59,7 +59,7 @@ public class AuthService : IAuthService
 
         // Generate Token & Return
         var token = GenerateJwtToken(user);
-        return new AuthResponse(token, user.Email, $"{user.FirstName} {user.LastName}");
+        return new AuthResponse(token, user.Email, $"{user.FirstName} {user.LastName}", ResolveAvatar(user.ProfileImageUrl));
     }
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request)
@@ -79,7 +79,7 @@ public class AuthService : IAuthService
 
         // Generate Token & Return
         var token = GenerateJwtToken(user);
-        return new AuthResponse(token, user.Email, $"{user.FirstName} {user.LastName}");
+        return new AuthResponse(token, user.Email, $"{user.FirstName} {user.LastName}", ResolveAvatar(user.ProfileImageUrl));
     }
 
     public string GenerateJwtToken(User user)
@@ -121,6 +121,11 @@ public class AuthService : IAuthService
     private static string PickRandomProfileImage()
     {
         return DefaultProfileImages[Random.Shared.Next(DefaultProfileImages.Length)];
+    }
+
+    private static string ResolveAvatar(string? avatarPath)
+    {
+        return string.IsNullOrWhiteSpace(avatarPath) ? "/assets/images/Avatar.png" : avatarPath;
     }
 }
 

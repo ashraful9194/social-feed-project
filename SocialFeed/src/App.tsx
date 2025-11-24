@@ -3,7 +3,6 @@ import { ErrorBoundary } from './components/common/ErrorBoundary';
 import FeedPage from './pages/FeedPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegistrationPage';
-import { useAuth } from './hooks/useAuth';
 import { ROUTES, STORAGE_KEYS } from './config/constants';
 
 /**

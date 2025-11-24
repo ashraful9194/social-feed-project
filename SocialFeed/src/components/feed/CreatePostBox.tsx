@@ -4,6 +4,8 @@ import type { ChangeEvent, FormEvent } from 'react';
 import { postService } from '../../services/PostService';
 import type { PostResponse } from '../../types/feed';
 import { getErrorMessage } from '../../utils/errorHandler';
+import { useAuth } from '../../hooks/useAuth';
+import { DEFAULT_AVATAR } from '../../config/constants';
 
 interface CreatePostBoxProps {
     onPostCreated?: (post: PostResponse) => void;
@@ -18,6 +20,9 @@ const CreatePostBox = ({ onPostCreated }: CreatePostBoxProps) => {
     const [isUploadingImage, setIsUploadingImage] = useState(false);
     const [uploadError, setUploadError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const { getUser, getUserAvatar } = useAuth();
+    const currentUser = getUser();
+    const currentUserAvatar = getUserAvatar() ?? DEFAULT_AVATAR;
 
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
@@ -72,7 +77,7 @@ const CreatePostBox = ({ onPostCreated }: CreatePostBoxProps) => {
         <form className="_feed_inner_text_area _b_radious6 _padd_b24 _padd_t24 _padd_r24 _padd_l24 _mar_b16" onSubmit={handleSubmit}>
             <div className="_feed_inner_text_area_box">
                 <div className="_feed_inner_text_area_box_image">
-                    <img src="/assets/images/txt_img.png" alt="Image" className="_txt_img" />
+                    <img src={currentUserAvatar} alt={currentUser?.name ?? 'Profile'} className="_txt_img" />
                 </div>
                 <div className="form-floating _feed_inner_text_area_box_form">
           <textarea

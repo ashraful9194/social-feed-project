@@ -2,7 +2,7 @@ import React, { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../services/AuthService';
 import { getErrorMessage } from '../utils/errorHandler';
-import { STORAGE_KEYS, ROUTES } from '../config/constants';
+import { STORAGE_KEYS, ROUTES, DEFAULT_AVATAR } from '../config/constants';
 
 const Registration: React.FC = () => {
     const navigate = useNavigate();
@@ -65,7 +65,14 @@ const Registration: React.FC = () => {
 
             // 2. Save Token & User Info (Auto-login)
             localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
-            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify({ name: data.fullName, email: data.email }));
+            localStorage.setItem(
+                STORAGE_KEYS.USER,
+                JSON.stringify({
+                    name: data.fullName,
+                    email: data.email,
+                    avatarUrl: data.profileImageUrl ?? DEFAULT_AVATAR
+                })
+            );
 
             // 3. Redirect to Feed
             navigate(ROUTES.FEED);

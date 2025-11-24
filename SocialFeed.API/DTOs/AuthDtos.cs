@@ -15,5 +15,6 @@ public record LoginRequest(
 public record AuthResponse(
     string Token, 
     string Email, 
-    string FullName
+    string FullName,
+    string? ProfileImageUrl
 );

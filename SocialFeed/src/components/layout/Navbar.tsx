@@ -1,23 +1,16 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { authService } from '../../services/AuthService';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 
 const Navbar: React.FC = () => {
     // Dropdown state logic removed
     const [isNavOpen, setIsNavOpen] = useState(false);
-    const [isNotifyOpen, setIsNotifyOpen] = useState(false);
-    
-    const navigate = useNavigate();
-
-    const currentUser = (() => {
-        const stored = localStorage.getItem('user');
-        if (!stored) return { name: 'User', email: '' };
-        try { return JSON.parse(stored); } catch { return { name: 'User', email: '' }; }
-    })();
+    const { getUser, getUserAvatar, logout } = useAuth();
+    const currentUser = getUser();
+    const currentUserAvatar = getUserAvatar();
 
     const handleLogout = () => {
-        authService.logout();
-        navigate('/login', { replace: true });
+        logout();
     };
 
     return (
@@ -60,12 +53,12 @@ const Navbar: React.FC = () => {
                     {/* --- SIMPLIFIED PROFILE SECTION --- */}
                     <div className="_header_nav_profile" style={{ display: 'flex', alignItems: 'center' }}>
                         <div className="_header_nav_profile_image">
-                            <img src="assets/images/profile.png" alt="Profile" className="_nav_profile_img" />
+                            <img src={currentUserAvatar} alt={currentUser?.name ?? 'Profile'} className="_nav_profile_img" />
                         </div>
                         
                         <div className="_header_nav_dropdown" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <p className="_header_nav_para" style={{ margin: 0, paddingRight: '10px' }}>
-                                {currentUser.name}
+                                {currentUser?.name ?? 'User'}
                             </p>
                             
                             {/* Direct Logout Button */}
