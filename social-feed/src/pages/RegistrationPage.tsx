@@ -15,9 +15,30 @@ const Registration: React.FC = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
+    const hasMinLength = password.length >= 8;
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    const hasSpecial = /[^A-Za-z0-9]/.test(password);
+
+    const passwordCriteria = [
+        { label: 'At least 8 characters', met: hasMinLength },
+        { label: 'One uppercase letter', met: hasUppercase },
+        { label: 'One lowercase letter', met: hasLowercase },
+        { label: 'One number', met: hasNumber },
+        { label: 'One special character', met: hasSpecial }
+    ];
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setError('');
+
+        if (!emailPattern.test(email)) {
+            setError('Please enter a valid email address.');
+            return;
+        }
 
         if (password !== repeatPassword) {
             setError("Passwords do not match!");
@@ -149,6 +170,7 @@ const Registration: React.FC = () => {
                                                     value={email}
                                                     onChange={(e) => setEmail(e.target.value)}
                                                     required
+                                                    pattern={emailPattern.source}
                                                 />
                                             </div>
                                         </div>
@@ -175,6 +197,37 @@ const Registration: React.FC = () => {
                                                     required
                                                 />
                                             </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="row">
+                                        <div className="col-lg-12 col-xl-12 col-md-12 col-sm-12">
+                                            <ul className="_password_requirements" style={{ listStyle: 'none', paddingLeft: 0, marginTop: 10, marginBottom: 20 }}>
+                                                {passwordCriteria.map((criterion) => (
+                                                    <li
+                                                        key={criterion.label}
+                                                        style={{
+                                                            color: criterion.met ? '#2e7d32' : '#000',
+                                                            fontSize: '0.9rem',
+                                                            marginBottom: 4,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: 6
+                                                        }}
+                                                    >
+                                                        <span
+                                                            style={{
+                                                                width: 10,
+                                                                height: 10,
+                                                                borderRadius: '50%',
+                                                                backgroundColor: criterion.met ? '#2e7d32' : '#999',
+                                                                display: 'inline-block'
+                                                            }}
+                                                        ></span>
+                                                        {criterion.label}
+                                                    </li>
+                                                ))}
+                                            </ul>
                                         </div>
                                     </div>
 

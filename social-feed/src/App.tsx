@@ -18,14 +18,23 @@ const ProtectedLayout = () => {
     return <Outlet />;
 };
 
+const PublicOnlyLayout = () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+        return <Navigate to="/feed" replace />;
+    }
+    return <Outlet />;
+};
+
 function App() {
     return (
         <BrowserRouter>
             <Routes>
                 {/* --- PUBLIC ROUTES --- */}
-                {/* Anyone can access these */}
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
+                <Route element={<PublicOnlyLayout />}>
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                </Route>
 
                 {/* --- PROTECTED ROUTES --- */}
                 {/* Only logged-in users can access these */}

@@ -46,3 +46,9 @@ export interface CommentLikeResponse {
     totalLikes: number;
 }
 
+export interface UploadResponse {
+    url: string;
+    originalFileName: string;
+    size: number;
+}
+

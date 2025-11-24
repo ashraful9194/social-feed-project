@@ -47,3 +47,9 @@ public record CommentLikeResponse(
     bool IsLiked,
     int TotalLikes
 );
+
+public record UploadResponse(
+    string Url,
+    string OriginalFileName,
+    long Size
+);

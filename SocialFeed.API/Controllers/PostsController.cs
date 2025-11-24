@@ -39,7 +39,8 @@ public class PostsController : ControllerBase
                 p.Content,
                 p.ImageUrl,
                 p.IsPrivate,
-                $"{p.User.FirstName} {p.User.LastName}", "/assets/images/default-avatar.png", // Fallback image
+                $"{p.User.FirstName} {p.User.LastName}",
+                ResolveAvatar(p.User.ProfileImageUrl), // Fallback image
                 p.Likes.Count, // Count total likes
                 p.Comments.Count,
                 p.CreatedAt,
@@ -109,7 +110,7 @@ public class PostsController : ControllerBase
             newPost.ImageUrl,
             newPost.IsPrivate,
             $"{user!.FirstName} {user.LastName}",
-            "/assets/images/default-avatar.png",
+            ResolveAvatar(user.ProfileImageUrl),
             0, 0, newPost.CreatedAt, false
         ));
     }
@@ -146,7 +147,7 @@ public class PostsController : ControllerBase
                 comment.Content,
                 comment.CreatedAt,
                 $"{comment.User.FirstName} {comment.User.LastName}",
-                "/assets/images/default-avatar.png",
+                ResolveAvatar(comment.User.ProfileImageUrl),
                 comment.Likes.Count,
                 comment.Likes.Any(l => l.UserId == currentUserId),
                 comment.ParentCommentId,
@@ -205,7 +206,7 @@ public class PostsController : ControllerBase
             comment.Content,
             comment.CreatedAt,
             $"{comment.User.FirstName} {comment.User.LastName}",
-            "/assets/images/default-avatar.png",
+            ResolveAvatar(comment.User.ProfileImageUrl),
             0,
             false,
             comment.ParentCommentId,
@@ -262,5 +263,10 @@ public class PostsController : ControllerBase
         return _context.Comments
             .Include(c => c.Post)
             .FirstOrDefaultAsync(c => c.Id == commentId && (!c.Post.IsPrivate || c.Post.UserId == currentUserId));
+    }
+
+    private static string ResolveAvatar(string? avatarPath)
+    {
+        return string.IsNullOrWhiteSpace(avatarPath) ? "/assets/images/Avatar.png" : avatarPath;
     }
 }

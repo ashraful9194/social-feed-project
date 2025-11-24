@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react';
 import Navbar from '../components/layout/Navbar';
 import ThemeToggle from '../components/layout/ThemeToggle';
-import LeftSidebar from '../components/layout/LeftSidebar';
-import RightSidebar from '../components/layout/RightSidebar';
 import CreatePostBox from '../components/feed/CreatePostBox';
 import PostCard from '../components/feed/PostCard';
-import Stories from '../components/feed/Stories';
 import type { PostResponse } from '../types/feed';
 import { postService } from '../services/PostService';
 
@@ -45,13 +42,10 @@ const FeedPage = () => {
                 <div className="_main_layout">
                     <div className="container _custom_container">
                         <div className="_layout_inner_wrap">
-                            <div className="row">
-                                <LeftSidebar />
-
-                                <div className="col-xl-6 col-lg-6 col-md-12 col-sm-12">
+                            <div className="row justify-content-center">
+                                <div className="col-xl-8 col-lg-9 col-md-12 col-sm-12">
                                     <div className="_layout_middle_wrap">
                                         <div className="_layout_middle_inner">
-                                            <Stories />
                                             <CreatePostBox onPostCreated={handlePostCreated} />
 
                                             {loading && <p>Loading feed...</p>}
@@ -72,8 +66,6 @@ const FeedPage = () => {
                                         </div>
                                     </div>
                                 </div>
-
-                                <RightSidebar />
                             </div>
                         </div>
                     </div>

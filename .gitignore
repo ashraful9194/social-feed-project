@@ -13,3 +13,7 @@
 
 # Environment Config (Optional but recommended)
 appsettings.Development.json
+
+# Uploaded Assets
+SocialFeed.API/wwwroot/uploads/*
+!SocialFeed.API/wwwroot/uploads/.gitkeep

@@ -43,12 +43,20 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         }
     };
 
+    const sortCommentsDesc = (items: CommentResponse[]): CommentResponse[] =>
+        [...items]
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .map((item) => ({
+                ...item,
+                replies: sortCommentsDesc(item.replies)
+            }));
+
     const loadComments = useCallback(async () => {
         if (hasLoadedComments) return;
         try {
             setLoadingComments(true);
             const response = await postService.getComments(post.id);
-            setComments(response);
+            setComments(sortCommentsDesc(response));
         } catch (err) {
             console.error(err);
             setError('Unable to load comments.');
@@ -84,13 +92,14 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
             setComments((prev) => {
                 if (!parentCommentId) {
-                    return [...prev, created];
+                    return [created, ...prev];
                 }
 
                 const addReply = (items: CommentResponse[]): CommentResponse[] =>
                     items.map((item) => {
                         if (item.id === parentCommentId) {
-                            return { ...item, replies: [...item.replies, created] };
+                            const updatedReplies = sortCommentsDesc([created, ...item.replies]);
+                            return { ...item, replies: updatedReplies };
                         }
                         if (item.replies.length) {
                             return { ...item, replies: addReply(item.replies) };
@@ -103,7 +112,11 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
             setCommentsCount((prev) => prev + 1);
             if (parentCommentId) {
-                setReplyDrafts((prev) => ({ ...prev, [parentCommentId]: '' }));
+                setReplyDrafts((prev) => {
+                    const updated = { ...prev };
+                    delete updated[parentCommentId];
+                    return updated;
+                });
             } else {
                 setNewComment('');
             }
@@ -132,7 +145,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                     return item;
                 });
 
-            setComments((prev) => updateTree(prev));
+            setComments((prev) => sortCommentsDesc(updateTree(prev)));
         } catch (err) {
             console.error(err);
             setError('Unable to like comment.');
@@ -157,17 +170,19 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                                 <span>{comment.content}</span>
                             </p>
                         </div>
-                        <div className="_total_reactions">
+                        <div className="_total_reactions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                             <button
                                 type="button"
                                 className={`_reaction_like ${comment.isLikedByCurrentUser ? 'text-primary' : ''}`}
                                 onClick={() => handleCommentLike(comment.id)}
+                                style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                             >
-                                👍 {comment.likesCount}
+                                <span role="img" aria-label="like">👍</span>
+                                <span>{comment.likesCount}</span>
                             </button>
                             <button
                                 type="button"
-                                className="_reaction_like _mar_l10"
+                                className="_reaction_like"
                                 onClick={() => setReplyDrafts((prev) => ({ ...prev, [comment.id]: prev[comment.id] ?? '' }))}
                             >
                                 Reply

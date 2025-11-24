@@ -17,6 +17,14 @@ public class AuthController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly IConfiguration _configuration;
+    private static readonly string[] DefaultProfileImages =
+    [
+        "/assets/images/card_ppl1.png",
+        "/assets/images/card_ppl2.png",
+        "/assets/images/card_ppl3.png",
+        "/assets/images/card_ppl4.png",
+        "/assets/images/Avatar.png"
+    ];
 
     public AuthController(AppDbContext context, IConfiguration configuration)
     {
@@ -34,6 +42,11 @@ public class AuthController : ControllerBase
             return BadRequest("User with this email already exists.");
         }
 
+        if (!IsStrongPassword(request.Password))
+        {
+            return BadRequest("Password must be at least 8 characters and contain uppercase, lowercase, number, and special character.");
+        }
+
         // 2. Hash password (Never store plain text!)
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
@@ -43,7 +56,8 @@ public class AuthController : ControllerBase
             FirstName = request.FirstName,
             LastName = request.LastName,
             Email = request.Email,
-            PasswordHash = passwordHash
+            PasswordHash = passwordHash,
+            ProfileImageUrl = PickRandomProfileImage()
         };
 
         _context.Users.Add(user);
@@ -101,5 +115,20 @@ public class AuthController : ControllerBase
         var tokenHandler = new JwtSecurityTokenHandler();
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
+    }
+
+    private static string PickRandomProfileImage()
+    {
+        return DefaultProfileImages[Random.Shared.Next(DefaultProfileImages.Length)];
+    }
+
+    private static bool IsStrongPassword(string password)
+    {
+        if (string.IsNullOrWhiteSpace(password) || password.Length < 8) return false;
+        var hasUpper = password.Any(char.IsUpper);
+        var hasLower = password.Any(char.IsLower);
+        var hasDigit = password.Any(char.IsDigit);
+        var hasSpecial = password.Any(ch => !char.IsLetterOrDigit(ch));
+        return hasUpper && hasLower && hasDigit && hasSpecial;
     }
 }

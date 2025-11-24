@@ -59,6 +59,7 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowReactApp");
 
 // **CRITICAL: Auth Middleware Order matters**
+app.UseStaticFiles();
 app.UseAuthentication(); // Who are you?
 app.UseAuthorization();  // What can you do?
 

@@ -5,7 +5,8 @@ import type {
     CreateCommentRequest,
     CreatePostRequest,
     PostLikeResponse,
-    PostResponse
+    PostResponse,
+    UploadResponse
 } from '../types/feed';
 
 export const postService = {
@@ -36,6 +37,17 @@ export const postService = {
 
     toggleCommentLike: async (commentId: number) => {
         const response = await axiosClient.post<CommentLikeResponse>(`/comments/${commentId}/likes`);
+        return response.data;
+    },
+
+    uploadPostImage: async (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await axiosClient.post<UploadResponse>('/uploads/post-image', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
         return response.data;
     }
 };
