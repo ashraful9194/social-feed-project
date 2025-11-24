@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { CommentResponse, LikeUserResponse, PostResponse } from '../../types/feed';
 import { postService } from '../../services/PostService';
+import { formatTimeAgo } from '../../utils/dateUtils';
+import { getErrorMessage } from '../../utils/errorHandler';
+import { DEFAULT_AVATAR } from '../../config/constants';
 
 interface PostCardProps {
     post: PostResponse;
@@ -19,21 +22,8 @@ const createEmptyLikeMeta = (): LikeHoverMeta => ({
     users: [],
     status: 'idle',
     visible: false,
-    error: null
+    error: null,
 });
-
-const formatTimeAgo = (isoDate: string) => {
-    const created = new Date(isoDate);
-    const diffMs = Date.now() - created.getTime();
-    const minutes = Math.floor(diffMs / 60000);
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h`;
-    const days = Math.floor(hours / 24);
-    if (days < 7) return `${days}d`;
-    return created.toLocaleDateString();
-};
 
 const PostCard: React.FC<PostCardProps> = ({ post }) => {
     const [likesCount, setLikesCount] = useState(post.likesCount);
@@ -62,7 +52,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             setPostLikesMeta(createEmptyLikeMeta());
         } catch (err) {
             console.error(err);
-            setError('Unable to update like.');
+            setError(getErrorMessage(err));
         }
     };
 
@@ -114,7 +104,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             setComments(sortCommentsDesc(response));
         } catch (err) {
             console.error(err);
-            setError('Unable to load comments.');
+            setError(getErrorMessage(err));
         } finally {
             setLoadingComments(false);
         }
@@ -177,7 +167,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             }
         } catch (err) {
             console.error(err);
-            setError('Unable to add comment.');
+            setError(getErrorMessage(err));
         }
     };
 
@@ -209,7 +199,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             });
         } catch (err) {
             console.error(err);
-            setError('Unable to like comment.');
+            setError(getErrorMessage(err));
         }
     };
 
@@ -242,9 +232,9 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 [commentId]: {
                     ...(prev[commentId] ?? createEmptyLikeMeta()),
                     status: 'error',
-                    error: 'Unable to load likes.',
-                    visible: true
-                }
+                    error: getErrorMessage(err),
+                    visible: true,
+                },
             }));
         }
     };
@@ -322,7 +312,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                     {resolved.users.map((user) => (
                         <li key={user.userId} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
                             <img
-                                src={user.avatarUrl ?? '/assets/images/Avatar.png'}
+                                src={user.avatarUrl ?? DEFAULT_AVATAR}
                                 alt={user.fullName}
                                 style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }}
                             />

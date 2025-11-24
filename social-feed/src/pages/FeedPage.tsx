@@ -5,6 +5,7 @@ import CreatePostBox from '../components/feed/CreatePostBox';
 import PostCard from '../components/feed/PostCard';
 import type { PostResponse } from '../types/feed';
 import { postService } from '../services/PostService';
+import { getErrorMessage } from '../utils/errorHandler';
 
 const FeedPage = () => {
     const [posts, setPosts] = useState<PostResponse[]>([]);
@@ -19,7 +20,7 @@ const FeedPage = () => {
             setPosts(data);
         } catch (err) {
             console.error(err);
-            setError('Unable to load feed. Please refresh.');
+            setError(getErrorMessage(err));
         } finally {
             setLoading(false);
         }

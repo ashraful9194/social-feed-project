@@ -1,6 +1,8 @@
 import React, { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { authService } from '../services/AuthService'; // Ensure case sensitivity (authService.ts)
+import { authService } from '../services/AuthService';
+import { getErrorMessage } from '../utils/errorHandler';
+import { STORAGE_KEYS, ROUTES } from '../config/constants';
 
 const Registration: React.FC = () => {
     const navigate = useNavigate();
@@ -62,15 +64,14 @@ const Registration: React.FC = () => {
             });
 
             // 2. Save Token & User Info (Auto-login)
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify({ name: data.fullName, email: data.email }));
+            localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
+            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify({ name: data.fullName, email: data.email }));
 
             // 3. Redirect to Feed
-            navigate('/feed');
-        } catch (err: any) {
+            navigate(ROUTES.FEED);
+        } catch (err) {
             console.error(err);
-            const errorMessage = err.response?.data || 'Registration failed. Please try again.';
-            setError(errorMessage);
+            setError(getErrorMessage(err));
         } finally {
             setLoading(false);
         }

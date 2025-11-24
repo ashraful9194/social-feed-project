@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { postService } from '../../services/PostService';
 import type { PostResponse } from '../../types/feed';
+import { getErrorMessage } from '../../utils/errorHandler';
 
 interface CreatePostBoxProps {
     onPostCreated?: (post: PostResponse) => void;
@@ -39,7 +40,7 @@ const CreatePostBox = ({ onPostCreated }: CreatePostBoxProps) => {
             onPostCreated?.(newPost);
         } catch (err) {
             console.error(err);
-            setError('Failed to publish post. Please try again.');
+            setError(getErrorMessage(err));
         } finally {
             setIsSubmitting(false);
         }
@@ -60,7 +61,7 @@ const CreatePostBox = ({ onPostCreated }: CreatePostBoxProps) => {
             setImageUrl(url);
         } catch (err) {
             console.error(err);
-            setUploadError('Failed to upload image. Please try another file.');
+            setUploadError(getErrorMessage(err));
         } finally {
             setIsUploadingImage(false);
             event.target.value = '';

@@ -1,4 +1,5 @@
 import axiosClient from '../api/AxiosClient';
+import { STORAGE_KEYS } from '../config/constants';
 
 // Types matching your Backend DTOs
 export interface RegisterRequest {
@@ -20,18 +21,18 @@ export interface AuthResponse {
 }
 
 export const authService = {
-    register: async (data: RegisterRequest) => {
+    register: async (data: RegisterRequest): Promise<AuthResponse> => {
         const response = await axiosClient.post<AuthResponse>('/auth/register', data);
         return response.data;
     },
 
-    login: async (data: LoginRequest) => {
+    login: async (data: LoginRequest): Promise<AuthResponse> => {
         const response = await axiosClient.post<AuthResponse>('/auth/login', data);
         return response.data;
     },
 
-    logout: () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-    }
+    logout: (): void => {
+        localStorage.removeItem(STORAGE_KEYS.TOKEN);
+        localStorage.removeItem(STORAGE_KEYS.USER);
+    },
 };

@@ -1,13 +1,7 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using BCrypt.Net;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using SocialFeed.API.Data;
 using SocialFeed.API.DTOs;
-using SocialFeed.API.Entities;
+using SocialFeed.API.Helpers;
+using SocialFeed.API.Services;
 
 namespace SocialFeed.API.Controllers;
 
@@ -15,120 +9,44 @@ namespace SocialFeed.API.Controllers;
 [ApiController]
 public class AuthController : ControllerBase
 {
-    private readonly AppDbContext _context;
-    private readonly IConfiguration _configuration;
-    private static readonly string[] DefaultProfileImages =
-    [
-        "/assets/images/card_ppl1.png",
-        "/assets/images/card_ppl2.png",
-        "/assets/images/card_ppl3.png",
-        "/assets/images/card_ppl4.png",
-        "/assets/images/Avatar.png"
-    ];
+    private readonly IAuthService _authService;
 
-    public AuthController(AppDbContext context, IConfiguration configuration)
+    public AuthController(IAuthService authService)
     {
-        _context = context;
-        _configuration = configuration;
+        _authService = authService;
     }
 
-    // POST: api/auth/register
+    /// <summary>
+    /// Register a new user
+    /// </summary>
     [HttpPost("register")]
     public async Task<ActionResult<AuthResponse>> Register(RegisterRequest request)
     {
-        // 1. Check if user exists
-        if (await _context.Users.AnyAsync(u => u.Email == request.Email))
+        try
         {
-            return BadRequest("User with this email already exists.");
+            var response = await _authService.RegisterAsync(request);
+            return Ok(response);
         }
-
-        if (!IsStrongPassword(request.Password))
+        catch (Exception ex)
         {
-            return BadRequest("Password must be at least 8 characters and contain uppercase, lowercase, number, and special character.");
+            return ControllerHelper.HandleException(ex);
         }
-
-        // 2. Hash password (Never store plain text!)
-        var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-
-        // 3. Create User
-        var user = new User
-        {
-            FirstName = request.FirstName,
-            LastName = request.LastName,
-            Email = request.Email,
-            PasswordHash = passwordHash,
-            ProfileImageUrl = PickRandomProfileImage()
-        };
-
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
-
-        // 4. Generate Token & Return
-        var token = GenerateJwtToken(user);
-        return Ok(new AuthResponse(token, user.Email, $"{user.FirstName} {user.LastName}"));
     }
 
-    // POST: api/auth/login
+    /// <summary>
+    /// Login an existing user
+    /// </summary>
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponse>> Login(LoginRequest request)
     {
-        // 1. Find User
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
-        if (user == null)
+        try
         {
-            return Unauthorized("Invalid email or password.");
+            var response = await _authService.LoginAsync(request);
+            return Ok(response);
         }
-
-        // 2. Verify Password
-        if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        catch (Exception ex)
         {
-            return Unauthorized("Invalid email or password.");
+            return ControllerHelper.HandleException(ex);
         }
-
-        // 3. Generate Token & Return
-        var token = GenerateJwtToken(user);
-        return Ok(new AuthResponse(token, user.Email, $"{user.FirstName} {user.LastName}"));
-    }
-
-    // --- Helper Function: Create JWT Token ---
-    private string GenerateJwtToken(User user)
-    {
-        var jwtSettings = _configuration.GetSection("JwtSettings");
-        var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
-
-        var claims = new List<Claim>
-        {
-            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()), // The User ID
-            new(JwtRegisteredClaimNames.Email, user.Email),
-            new(ClaimTypes.Name, $"{user.FirstName} {user.LastName}")
-        };
-
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddDays(7), // Token valid for 7 days
-            Issuer = jwtSettings["Issuer"],
-            Audience = jwtSettings["Audience"],
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-        };
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(token);
-    }
-
-    private static string PickRandomProfileImage()
-    {
-        return DefaultProfileImages[Random.Shared.Next(DefaultProfileImages.Length)];
-    }
-
-    private static bool IsStrongPassword(string password)
-    {
-        if (string.IsNullOrWhiteSpace(password) || password.Length < 8) return false;
-        var hasUpper = password.Any(char.IsUpper);
-        var hasLower = password.Any(char.IsLower);
-        var hasDigit = password.Any(char.IsDigit);
-        var hasSpecial = password.Any(ch => !char.IsLetterOrDigit(ch));
-        return hasUpper && hasLower && hasDigit && hasSpecial;
     }
 }

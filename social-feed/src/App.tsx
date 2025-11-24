@@ -1,56 +1,63 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import FeedPage from './pages/FeedPage';
 import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegistrationPage'; // Ensure this matches your filename (RegisterPage.tsx)
+import RegisterPage from './pages/RegistrationPage';
+import { useAuth } from './hooks/useAuth';
+import { ROUTES, STORAGE_KEYS } from './config/constants';
 
-// --- PROTECTED ROUTE GUARD ---
-// This component wraps any route that needs authentication.
+/**
+ * Protected Route Guard
+ * Wraps routes that require authentication
+ */
 const ProtectedLayout = () => {
-    // Check if the user has a token (saved during Login/Register)
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
 
-    // If no token, kick them back to the login page
     if (!token) {
-        return <Navigate to="/login" replace />;
+        return <Navigate to={ROUTES.LOGIN} replace />;
     }
 
-    // If token exists, render the requested page (The Outlet)
     return <Outlet />;
 };
 
+/**
+ * Public Only Layout
+ * Redirects authenticated users away from public pages
+ */
 const PublicOnlyLayout = () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+    
     if (token) {
-        return <Navigate to="/feed" replace />;
+        return <Navigate to={ROUTES.FEED} replace />;
     }
+    
     return <Outlet />;
 };
 
 function App() {
     return (
-        <BrowserRouter>
-            <Routes>
-                {/* --- PUBLIC ROUTES --- */}
-                <Route element={<PublicOnlyLayout />}>
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/register" element={<RegisterPage />} />
-                </Route>
+        <ErrorBoundary>
+            <BrowserRouter>
+                <Routes>
+                    {/* Public Routes */}
+                    <Route element={<PublicOnlyLayout />}>
+                        <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+                        <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+                    </Route>
 
-                {/* --- PROTECTED ROUTES --- */}
-                {/* Only logged-in users can access these */}
-                <Route element={<ProtectedLayout />}>
-                    <Route path="/feed" element={<FeedPage />} />
-                </Route>
+                    {/* Protected Routes */}
+                    <Route element={<ProtectedLayout />}>
+                        <Route path={ROUTES.FEED} element={<FeedPage />} />
+                    </Route>
 
-                {/* --- DEFAULT REDIRECT --- */}
-                {/* If user goes to "/", try sending them to feed. 
-            The ProtectedLayout will catch them if they aren't logged in. */}
-                <Route path="/" element={<Navigate to="/feed" replace />} />
+                    {/* Default Redirect */}
+                    <Route path={ROUTES.ROOT} element={<Navigate to={ROUTES.FEED} replace />} />
 
-                {/* Catch-all for 404s (Optional, redirects to login) */}
-                <Route path="*" element={<Navigate to="/login" replace />} />
-            </Routes>
-        </BrowserRouter>
+                    {/* 404 Catch-all */}
+                    <Route path="*" element={<Navigate to={ROUTES.LOGIN} replace />} />
+                </Routes>
+            </BrowserRouter>
+        </ErrorBoundary>
     );
 }
 

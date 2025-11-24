@@ -43,6 +43,10 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader());
 });
 
+// Register Services
+builder.Services.AddScoped<SocialFeed.API.Services.IAuthService, SocialFeed.API.Services.AuthService>();
+builder.Services.AddScoped<SocialFeed.API.Services.IPostService, SocialFeed.API.Services.PostService>();
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
