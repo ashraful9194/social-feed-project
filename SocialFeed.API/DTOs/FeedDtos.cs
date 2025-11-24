@@ -53,3 +53,9 @@ public record UploadResponse(
     string OriginalFileName,
     long Size
 );
+
+public record LikeUserResponse(
+    int UserId,
+    string FullName,
+    string? AvatarUrl
+);

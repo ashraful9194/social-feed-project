@@ -1,10 +1,26 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import type { CommentResponse, PostResponse } from '../../types/feed';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import type { CommentResponse, LikeUserResponse, PostResponse } from '../../types/feed';
 import { postService } from '../../services/PostService';
 
 interface PostCardProps {
     post: PostResponse;
 }
+
+type LikeHoverStatus = 'idle' | 'loading' | 'loaded' | 'error';
+
+interface LikeHoverMeta {
+    users: LikeUserResponse[];
+    status: LikeHoverStatus;
+    visible: boolean;
+    error?: string | null;
+}
+
+const createEmptyLikeMeta = (): LikeHoverMeta => ({
+    users: [],
+    status: 'idle',
+    visible: false,
+    error: null
+});
 
 const formatTimeAgo = (isoDate: string) => {
     const created = new Date(isoDate);
@@ -29,18 +45,57 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     const [newComment, setNewComment] = useState('');
     const [replyDrafts, setReplyDrafts] = useState<Record<number, string>>({});
     const [error, setError] = useState<string | null>(null);
+    const [postLikesMeta, setPostLikesMeta] = useState<LikeHoverMeta>(createEmptyLikeMeta());
+    const [commentLikesMeta, setCommentLikesMeta] = useState<Record<number, LikeHoverMeta>>({});
 
     const hasLoadedComments = useMemo(() => comments.length > 0, [comments]);
+
+    useEffect(() => {
+        setPostLikesMeta(createEmptyLikeMeta());
+    }, [likesCount, post.id]);
 
     const toggleLike = async () => {
         try {
             const result = await postService.togglePostLike(post.id);
             setLikesCount(result.totalLikes);
             setIsLiked(result.isLiked);
+            setPostLikesMeta(createEmptyLikeMeta());
         } catch (err) {
             console.error(err);
             setError('Unable to update like.');
         }
+    };
+
+    const fetchPostLikes = async () => {
+        try {
+            setPostLikesMeta((prev) => ({ ...prev, status: 'loading', error: null }));
+            const response = await postService.getPostLikes(post.id);
+            setPostLikesMeta((prev) => ({
+                ...prev,
+                status: 'loaded',
+                users: response,
+                error: null
+            }));
+        } catch (err) {
+            console.error(err);
+            setPostLikesMeta((prev) => ({
+                ...prev,
+                status: 'error',
+                error: 'Unable to load likes.'
+            }));
+        }
+    };
+
+    const handlePostLikesEnter = () => {
+        if (!likesCount) return;
+        setPostLikesMeta((prev) => ({ ...prev, visible: true }));
+        if (postLikesMeta.status === 'idle') {
+            void fetchPostLikes();
+        }
+    };
+
+    const handlePostLikesLeave = () => {
+        setPostLikesMeta((prev) => ({ ...prev, visible: false }));
     };
 
     const sortCommentsDesc = (items: CommentResponse[]): CommentResponse[] =>
@@ -146,10 +201,144 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 });
 
             setComments((prev) => sortCommentsDesc(updateTree(prev)));
+            setCommentLikesMeta((prev) => {
+                if (!prev[commentId]) return prev;
+                const updated = { ...prev };
+                delete updated[commentId];
+                return updated;
+            });
         } catch (err) {
             console.error(err);
             setError('Unable to like comment.');
         }
+    };
+
+    const fetchCommentLikes = async (commentId: number) => {
+        try {
+            setCommentLikesMeta((prev) => ({
+                ...prev,
+                [commentId]: {
+                    ...(prev[commentId] ?? createEmptyLikeMeta()),
+                    status: 'loading',
+                    error: null,
+                    visible: true
+                }
+            }));
+            const response = await postService.getCommentLikes(commentId);
+            setCommentLikesMeta((prev) => ({
+                ...prev,
+                [commentId]: {
+                    ...(prev[commentId] ?? createEmptyLikeMeta()),
+                    status: 'loaded',
+                    users: response,
+                    error: null,
+                    visible: true
+                }
+            }));
+        } catch (err) {
+            console.error(err);
+            setCommentLikesMeta((prev) => ({
+                ...prev,
+                [commentId]: {
+                    ...(prev[commentId] ?? createEmptyLikeMeta()),
+                    status: 'error',
+                    error: 'Unable to load likes.',
+                    visible: true
+                }
+            }));
+        }
+    };
+
+    const handleCommentLikesEnter = (commentId: number, totalLikes: number) => {
+        if (!totalLikes) return;
+        setCommentLikesMeta((prev) => ({
+            ...prev,
+            [commentId]: {
+                ...(prev[commentId] ?? createEmptyLikeMeta()),
+                visible: true
+            }
+        }));
+
+        const meta = commentLikesMeta[commentId];
+        if (!meta || meta.status === 'idle') {
+            void fetchCommentLikes(commentId);
+        }
+    };
+
+    const handleCommentLikesLeave = (commentId: number) => {
+        setCommentLikesMeta((prev) => {
+            if (!prev[commentId]) return prev;
+            return {
+                ...prev,
+                [commentId]: {
+                    ...prev[commentId],
+                    visible: false
+                }
+            };
+        });
+    };
+
+    const renderLikeTooltip = (meta: LikeHoverMeta | undefined, config?: { align?: 'left' | 'right'; position?: 'top' | 'bottom' }) => {
+        const resolved = meta ?? createEmptyLikeMeta();
+        if (!resolved.visible) return null;
+
+        const align = config?.align ?? 'left';
+        const position = config?.position ?? 'bottom';
+
+        const style: React.CSSProperties = {
+            position: 'absolute',
+            zIndex: 20,
+            width: 220,
+            backgroundColor: '#fff',
+            borderRadius: 10,
+            boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+            padding: 12
+        };
+
+        if (align === 'left') {
+            style.left = 0;
+        } else {
+            style.right = 0;
+        }
+
+        if (position === 'bottom') {
+            style.top = 'calc(100% + 8px)';
+        } else {
+            style.bottom = 'calc(100% + 8px)';
+        }
+
+        const content = (() => {
+            if (resolved.status === 'loading') {
+                return <p style={{ fontSize: 13, color: '#65676B', margin: 0 }}>Loading likes...</p>;
+            }
+            if (resolved.status === 'error') {
+                return <p style={{ fontSize: 13, color: '#dc3545', margin: 0 }}>{resolved.error ?? 'Unable to load likes.'}</p>;
+            }
+            if (resolved.users.length === 0) {
+                return <p style={{ fontSize: 13, color: '#65676B', margin: 0 }}>No likes yet.</p>;
+            }
+            return (
+                <ul style={{ listStyle: 'none', margin: 0, padding: 0, maxHeight: 220, overflowY: 'auto' }}>
+                    {resolved.users.map((user) => (
+                        <li key={user.userId} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
+                            <img
+                                src={user.avatarUrl ?? '/assets/images/Avatar.png'}
+                                alt={user.fullName}
+                                style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }}
+                            />
+                            <span style={{ fontSize: 13, color: '#050505' }}>{user.fullName}</span>
+                        </li>
+                    ))}
+                </ul>
+            );
+        })();
+
+        return (
+            <div style={style}>
+                <p style={{ fontSize: 12, fontWeight: 600, color: '#050505', marginBottom: 8 }}>Liked by</p>
+                {content}
+            </div>
+        );
     };
 
     // --- REFACTORED RENDER FUNCTION FOR FACEBOOK STYLE ---
@@ -187,24 +376,38 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
                             {/* Floating Like Count Badge (Bottom Right of Bubble) */}
                             {comment.likesCount > 0 && (
-                                <div style={{
-                                    position: 'absolute',
-                                    bottom: -10,
-                                    right: 0,
-                                    backgroundColor: '#fff',
-                                    borderRadius: '10px',
-                                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                                    padding: '2px 4px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 2,
-                                    fontSize: '11px',
-                                    zIndex: 1
-                                }}>
-                                    <span style={{ backgroundColor: '#1877F2', borderRadius: '50%', padding: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14 }}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="#fff" width="8" height="8"><path d="M8.856.884c.834.332 1.58.917 1.63 1.956.12.392-.09.83-.24 1.205l-.01.026s-.066.155-.065.155c-.01.025-.018.05-.028.075.688.163 1.838.59 2.158 1.408.435 1.109-.17 2.396-1.125 2.873.344.474.349 1.157.067 1.62-.27.442-.857.702-1.342.805.122.427-.058.914-.37 1.21-.397.377-1.104.53-1.638.577h-.066c-.636.002-1.42.062-1.895-.298-.445-.337-.532-1.012-.662-1.573-.133-.572-.257-1.144-.73-1.503-.306-.233-.7-.272-1.077-.28h-1.6c-.653.003-1.16-.547-1.127-1.2l.065-2.613c.038-.642.59-1.14 1.233-1.127h.063c.277 0 .524-.094.707-.268.324-.308.384-.816.516-1.237.2-.644.59-1.42 1.163-1.84.77-.565 1.706-.39 2.378.026z"/></svg>
-                                    </span>
-                                    <span style={{ color: '#65676B' }}>{comment.likesCount}</span>
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        bottom: -10,
+                                        right: 0,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'flex-end',
+                                        gap: 6,
+                                        zIndex: 1
+                                    }}
+                                    onMouseEnter={() => handleCommentLikesEnter(comment.id, comment.likesCount)}
+                                    onMouseLeave={() => handleCommentLikesLeave(comment.id)}
+                                >
+                                    <div
+                                        style={{
+                                            backgroundColor: '#fff',
+                                            borderRadius: '10px',
+                                            boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                                            padding: '2px 4px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 2,
+                                            fontSize: '11px'
+                                        }}
+                                    >
+                                        <span style={{ backgroundColor: '#1877F2', borderRadius: '50%', padding: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14 }}>
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="#fff" width="8" height="8"><path d="M8.856.884c.834.332 1.58.917 1.63 1.956.12.392-.09.83-.24 1.205l-.01.026s-.066.155-.065.155c-.01.025-.018.05-.028.075.688.163 1.838.59 2.158 1.408.435 1.109-.17 2.396-1.125 2.873.344.474.349 1.157.067 1.62-.27.442-.857.702-1.342.805.122.427-.058.914-.37 1.21-.397.377-1.104.53-1.638.577h-.066c-.636.002-1.42.062-1.895-.298-.445-.337-.532-1.012-.662-1.573-.133-.572-.257-1.144-.73-1.503-.306-.233-.7-.272-1.077-.28h-1.6c-.653.003-1.16-.547-1.127-1.2l.065-2.613c.038-.642.59-1.14 1.233-1.127h.063c.277 0 .524-.094.707-.268.324-.308.384-.816.516-1.237.2-.644.59-1.42 1.163-1.84.77-.565 1.706-.39 2.378.026z"/></svg>
+                                        </span>
+                                        <span style={{ color: '#65676B' }}>{comment.likesCount}</span>
+                                    </div>
+                                    {renderLikeTooltip(commentLikesMeta[comment.id], { align: 'right', position: 'top' })}
                                 </div>
                             )}
                         </div>
@@ -305,9 +508,16 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
             <div className="_feed_inner_timeline_total_reacts _padd_r24 _padd_l24 _mar_b26">
                 <div className="_feed_inner_timeline_total_reacts_txt">
-                    <p className="_feed_inner_timeline_total_reacts_para1">
-                        <span>{likesCount}</span> Likes
-                    </p>
+                    <div
+                        style={{ position: 'relative', display: 'inline-block' }}
+                        onMouseEnter={handlePostLikesEnter}
+                        onMouseLeave={handlePostLikesLeave}
+                    >
+                        <p className="_feed_inner_timeline_total_reacts_para1">
+                            <span>{likesCount}</span> Likes
+                        </p>
+                        {likesCount > 0 && renderLikeTooltip(postLikesMeta, { align: 'left', position: 'bottom' })}
+                    </div>
                     <p className="_feed_inner_timeline_total_reacts_para2">
                         <span>{commentsCount}</span> Comments
                     </p>

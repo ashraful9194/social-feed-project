@@ -46,6 +46,12 @@ export interface CommentLikeResponse {
     totalLikes: number;
 }
 
+export interface LikeUserResponse {
+    userId: number;
+    fullName: string;
+    avatarUrl?: string | null;
+}
+
 export interface UploadResponse {
     url: string;
     originalFileName: string;

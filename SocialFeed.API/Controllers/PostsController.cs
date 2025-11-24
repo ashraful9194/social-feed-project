@@ -81,6 +81,30 @@ public class PostsController : ControllerBase
         return Ok(new PostLikeResponse(postId, isLiked, totalLikes));
     }
 
+    // GET: api/posts/{postId}/likes
+    // Returns the users who liked a post
+    [HttpGet("{postId}/likes")]
+    public async Task<ActionResult<List<LikeUserResponse>>> GetPostLikes(int postId)
+    {
+        var currentUserId = GetCurrentUserId();
+        var post = await FindVisiblePostAsync(postId, currentUserId);
+        if (post == null) return NotFound();
+
+        var likes = await _context.PostLikes
+            .Where(pl => pl.PostId == postId)
+            .Include(pl => pl.User)
+            .OrderBy(pl => pl.User.FirstName)
+            .ThenBy(pl => pl.User.LastName)
+            .Select(pl => new LikeUserResponse(
+                pl.UserId,
+                $"{pl.User.FirstName} {pl.User.LastName}",
+                ResolveAvatar(pl.User.ProfileImageUrl)
+            ))
+            .ToListAsync();
+
+        return Ok(likes);
+    }
+
     // POST: api/posts
     // Creates a new Post
     [HttpPost]
@@ -242,6 +266,30 @@ public class PostsController : ControllerBase
         var totalLikes = await _context.CommentLikes.CountAsync(cl => cl.CommentId == commentId);
 
         return Ok(new CommentLikeResponse(commentId, isLiked, totalLikes));
+    }
+
+    // GET: api/comments/{commentId}/likes
+    // Returns users who liked a specific comment (or reply)
+    [HttpGet("~/api/comments/{commentId}/likes")]
+    public async Task<ActionResult<List<LikeUserResponse>>> GetCommentLikes(int commentId)
+    {
+        var currentUserId = GetCurrentUserId();
+        var comment = await FindAccessibleCommentAsync(commentId, currentUserId);
+        if (comment == null) return NotFound();
+
+        var likes = await _context.CommentLikes
+            .Where(cl => cl.CommentId == commentId)
+            .Include(cl => cl.User)
+            .OrderBy(cl => cl.User.FirstName)
+            .ThenBy(cl => cl.User.LastName)
+            .Select(cl => new LikeUserResponse(
+                cl.UserId,
+                $"{cl.User.FirstName} {cl.User.LastName}",
+                ResolveAvatar(cl.User.ProfileImageUrl)
+            ))
+            .ToListAsync();
+
+        return Ok(likes);
     }
 
     // --- Helper to extract User ID from JWT Token ---

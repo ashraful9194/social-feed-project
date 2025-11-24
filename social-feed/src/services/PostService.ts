@@ -4,6 +4,7 @@ import type {
     CommentResponse,
     CreateCommentRequest,
     CreatePostRequest,
+    LikeUserResponse,
     PostLikeResponse,
     PostResponse,
     UploadResponse
@@ -37,6 +38,16 @@ export const postService = {
 
     toggleCommentLike: async (commentId: number) => {
         const response = await axiosClient.post<CommentLikeResponse>(`/comments/${commentId}/likes`);
+        return response.data;
+    },
+
+    getPostLikes: async (postId: number) => {
+        const response = await axiosClient.get<LikeUserResponse[]>(`/posts/${postId}/likes`);
+        return response.data;
+    },
+
+    getCommentLikes: async (commentId: number) => {
+        const response = await axiosClient.get<LikeUserResponse[]>(`/comments/${commentId}/likes`);
         return response.data;
     },
 
