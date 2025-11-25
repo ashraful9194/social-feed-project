@@ -20,7 +20,7 @@ public class UploadsController : ControllerBase
 
     [HttpPost("post-image")]
     [RequestSizeLimit(MaxFileSize)]
-    public async Task<ActionResult<UploadResponse>> UploadPostImage([FromForm] IFormFile file)
+    public async Task<ActionResult<UploadResponse>> UploadPostImage(IFormFile file)
     {
         if (file == null || file.Length == 0)
         {
