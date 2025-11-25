@@ -3,7 +3,7 @@ import { API_BASE_URL, STORAGE_KEYS, ROUTES } from '../config/constants';
 import { isAuthError } from '../utils/errorHandler';
 
 const axiosClient = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
+    baseURL: API_BASE_URL,
     headers: {
         'Content-Type': 'application/json',
     },
