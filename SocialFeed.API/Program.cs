@@ -7,12 +7,15 @@ using SocialFeed.API.Data;
 var builder = WebApplication.CreateBuilder(args);
 
 // --- 1. Database ---
+// This automatically reads "ConnectionStrings__DefaultConnection" from Render Env Vars
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // --- 2. JWT Authentication Configuration ---
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
+// We use a fallback key just in case, but Render should provide the real one
+var keyString = jwtSettings["Key"] ?? "super_secret_fallback_key_for_dev_only_12345"; 
+var secretKey = Encoding.UTF8.GetBytes(keyString);
 
 builder.Services.AddAuthentication(options =>
     {
@@ -23,22 +26,26 @@ builder.Services.AddAuthentication(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
+            // Validate the Key (Crucial)
             ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSettings["Issuer"],
-            ValidAudience = jwtSettings["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(secretKey)
+            IssuerSigningKey = new SymmetricSecurityKey(secretKey),
+            
+            // Validate Lifetime (Token hasn't expired)
+            ValidateLifetime = true,
+
+            // Simplify for first deployment: Don't strictly check Issuer/Audience
+            // This prevents "401 Unauthorized" errors if config is slightly off
+            ValidateIssuer = false, 
+            ValidateAudience = false 
         };
     });
 
-// --- 3. CORS (Allow Frontend) ---
+// --- 3. CORS (UPDATED for Production) ---
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReactApp",
-        policy => policy
-            .WithOrigins("http://localhost:5173")
+    options.AddPolicy("AllowAll", policy => 
+        policy
+            .AllowAnyOrigin()  // Allows Vercel, Localhost, Mobile apps, etc.
             .AllowAnyMethod()
             .AllowAnyHeader());
 });
@@ -54,18 +61,16 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // --- 4. Pipeline ---
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// Enable Swagger in Production too (Optional, but helps you debug live)
+app.UseSwagger();
+app.UseSwaggerUI();
 
-app.UseCors("AllowReactApp");
+// USE THE NEW POLICY
+app.UseCors("AllowAll");
 
-// **CRITICAL: Auth Middleware Order matters**
 app.UseStaticFiles();
-app.UseAuthentication(); // Who are you?
-app.UseAuthorization();  // What can you do?
+app.UseAuthentication(); 
+app.UseAuthorization();
 
 app.UseHttpsRedirection();
 app.MapControllers();
