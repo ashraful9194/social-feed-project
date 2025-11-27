@@ -6,6 +6,7 @@ import './assets/css/bootstrap.min.css'
 import './assets/css/common.css'
 import './assets/css/main.css'
 import './assets/css/responsive.css'
+import './assets/css/createpostbox-mobile.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>

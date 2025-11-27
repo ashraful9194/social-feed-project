@@ -1,0 +1,54 @@
+/* Mobile responsive styles for CreatePostBox */
+
+/* On mobile screens (< 991px) - MATCHES NAVBAR BREAKPOINT */
+@media (max-width: 991px) {
+
+    /* Hide text in Public/Private button */
+    ._feed_inner_text_area_bottom_photo_link {
+        font-size: 0 !important;
+        /* Hide text */
+    }
+
+    /* Hide text in Photo button */
+    ._feed_inner_text_area_bottom_video ._ feed_inner_text_area_bottom_photo_link {
+        font-size: 0 !important;
+    }
+
+    /* Hide text in Post button */
+    ._feed_inner_text_area_btn_link span {
+        display: none !important;
+    }
+
+    /* Keep icons visible and properly sized */
+    ._feed_inner_text_area_bottom_photo_iamge {
+        margin: 0 !important;
+    }
+
+    ._mar_img {
+        margin: 0 !important;
+    }
+
+    /* Adjust button padding for icon-only layout */
+    ._feed_inner_text_area_bottom_photo_link {
+        padding: 8px 12px !important;
+    }
+
+    ._feed_inner_text_area_btn_link {
+        padding: 8px 16px !important;
+    }
+
+    /* Ensure buttons stay in a row with minimal gap */
+    ._feed_inner_text_area_item {
+        display: flex;
+        gap: 4px;
+        /* Small gap between buttons */
+    }
+
+    ._feed_inner_text_area_bottom {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 0 !important;
+        /* Remove extra spacing */
+    }
+}

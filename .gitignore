@@ -20,3 +20,4 @@ SocialFeed.API/wwwroot/uploads/*
 
 # Vite Cache (Add this!)
 .vite
+SocialFeed.API/firebase-service-account.json
