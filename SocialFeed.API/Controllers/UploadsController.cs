@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SocialFeed.API.DTOs;
+using SocialFeed.API.Services;
 
 namespace SocialFeed.API.Controllers;
 
@@ -11,11 +12,11 @@ public class UploadsController : ControllerBase
 {
     private static readonly string[] AllowedExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
     private const long MaxFileSize = 5 * 1024 * 1024; // 5 MB
-    private readonly IWebHostEnvironment _environment;
+    private readonly IGcpStorageService _gcpStorageService;
 
-    public UploadsController(IWebHostEnvironment environment)
+    public UploadsController(IGcpStorageService gcpStorageService)
     {
-        _environment = environment;
+        _gcpStorageService = gcpStorageService;
     }
 
     [HttpPost("post-image")]
@@ -38,34 +39,17 @@ public class UploadsController : ControllerBase
             return BadRequest("Only JPG, PNG, GIF, and WEBP are allowed.");
         }
 
-        var uploadsRoot = GetUploadsFolder();
-        Directory.CreateDirectory(uploadsRoot);
-
-        var fileName = $"{Guid.NewGuid():N}{extension}";
-        var physicalPath = Path.Combine(uploadsRoot, fileName);
-
-        await using var stream = System.IO.File.Create(physicalPath);
-        await file.CopyToAsync(stream);
-
-        var relativePath = $"/uploads/{fileName}";
-        var publicUrl = BuildPublicUrl(relativePath);
-        return Ok(new UploadResponse(publicUrl, file.FileName, file.Length));
-    }
-
-    private string GetUploadsFolder()
-    {
-        var webRoot = _environment.WebRootPath;
-        if (string.IsNullOrEmpty(webRoot))
+        try 
         {
-            webRoot = Path.Combine(_environment.ContentRootPath, "wwwroot");
+            var fileName = $"{Guid.NewGuid():N}{extension}";
+            var publicUrl = await _gcpStorageService.UploadFileAsync(file, fileName);
+            return Ok(new UploadResponse(publicUrl, file.FileName, file.Length));
         }
-        return Path.Combine(webRoot, "uploads");
-    }
-
-    private string BuildPublicUrl(string relativePath)
-    {
-        var host = $"{Request.Scheme}://{Request.Host.Value}";
-        return $"{host}{relativePath}";
+        catch (Exception ex)
+        {
+            // Log the error
+            return StatusCode(500, $"Internal server error: {ex.Message}");
+        }
     }
 }
 

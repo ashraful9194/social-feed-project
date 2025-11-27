@@ -1,0 +1,49 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'SocialFeed/**'
+      - '.github/workflows/frontend.yml'
+
+env:
+  PROJECT_ID: social-feed-app-9194 # TODO: Update if different
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: |
+          cd SocialFeed
+          npm ci
+
+      - name: Build
+        run: |
+          cd SocialFeed
+          npm run build
+
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Deploy to Firebase
+        run: |
+          cd SocialFeed
+          npm install -g firebase-tools
+          firebase deploy --only hosting --project ${{ env.PROJECT_ID }}

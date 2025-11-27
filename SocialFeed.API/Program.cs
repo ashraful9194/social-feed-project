@@ -53,6 +53,7 @@ builder.Services.AddCors(options =>
 // Register Services
 builder.Services.AddScoped<SocialFeed.API.Services.IAuthService, SocialFeed.API.Services.AuthService>();
 builder.Services.AddScoped<SocialFeed.API.Services.IPostService, SocialFeed.API.Services.PostService>();
+builder.Services.AddScoped<SocialFeed.API.Services.IGcpStorageService, SocialFeed.API.Services.GcpStorageService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -61,6 +62,14 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // --- 4. Pipeline ---
+
+// Apply Migrations at Startup (Simplifies deployment for this assessment)
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    dbContext.Database.Migrate();
+}
+
 // Enable Swagger in Production too (Optional, but helps you debug live)
 app.UseSwagger();
 app.UseSwaggerUI();
