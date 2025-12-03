@@ -16,8 +16,8 @@ const FeedPage = () => {
         try {
             setLoading(true);
             setError(null);
-            const data = await postService.getFeed();
-            setPosts(data);
+            const response = await postService.getFeed();
+            setPosts(response.items);
         } catch (err) {
             console.error(err);
             setError(getErrorMessage(err));

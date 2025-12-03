@@ -7,12 +7,17 @@ import type {
     LikeUserResponse,
     PostLikeResponse,
     PostResponse,
-    UploadResponse
+    UploadResponse,
+    PaginatedResponse
 } from '../types/feed';
 
 export const postService = {
-    getFeed: async () => {
-        const response = await axiosClient.get<PostResponse[]>('/posts');
+    getFeed: async (limit = 20, cursor?: number) => {
+        const params = new URLSearchParams();
+        params.append('limit', limit.toString());
+        if (cursor) params.append('cursor', cursor.toString());
+
+        const response = await axiosClient.get<PaginatedResponse<PostResponse>>(`/posts?${params.toString()}`);
         return response.data;
     },
 
@@ -26,8 +31,12 @@ export const postService = {
         return response.data;
     },
 
-    getComments: async (postId: number) => {
-        const response = await axiosClient.get<CommentResponse[]>(`/posts/${postId}/comments`);
+    getComments: async (postId: number, limit = 20, cursor?: number) => {
+        const params = new URLSearchParams();
+        params.append('limit', limit.toString());
+        if (cursor) params.append('cursor', cursor.toString());
+
+        const response = await axiosClient.get<PaginatedResponse<CommentResponse>>(`/posts/${postId}/comments?${params.toString()}`);
         return response.data;
     },
 
@@ -41,13 +50,21 @@ export const postService = {
         return response.data;
     },
 
-    getPostLikes: async (postId: number) => {
-        const response = await axiosClient.get<LikeUserResponse[]>(`/posts/${postId}/likes`);
+    getPostLikes: async (postId: number, limit = 20, cursor?: number) => {
+        const params = new URLSearchParams();
+        params.append('limit', limit.toString());
+        if (cursor) params.append('cursor', cursor.toString());
+
+        const response = await axiosClient.get<PaginatedResponse<LikeUserResponse>>(`/posts/${postId}/likes?${params.toString()}`);
         return response.data;
     },
 
-    getCommentLikes: async (commentId: number) => {
-        const response = await axiosClient.get<LikeUserResponse[]>(`/comments/${commentId}/likes`);
+    getCommentLikes: async (commentId: number, limit = 20, cursor?: number) => {
+        const params = new URLSearchParams();
+        params.append('limit', limit.toString());
+        if (cursor) params.append('cursor', cursor.toString());
+
+        const response = await axiosClient.get<PaginatedResponse<LikeUserResponse>>(`/comments/${commentId}/likes?${params.toString()}`);
         return response.data;
     },
 

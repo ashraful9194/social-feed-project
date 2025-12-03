@@ -68,6 +68,8 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     dbContext.Database.Migrate();
+    // Seed Data
+    SocialFeed.API.Data.DataSeeder.Seed(dbContext);
 }
 
 // Enable Swagger in Production too (Optional, but helps you debug live)

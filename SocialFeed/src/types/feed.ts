@@ -58,3 +58,8 @@ export interface UploadResponse {
     size: number;
 }
 
+export interface PaginatedResponse<T> {
+    items: T[];
+    nextCursor?: number | null;
+}
+

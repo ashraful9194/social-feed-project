@@ -12,6 +12,7 @@
 *.suo
 
 # Environment Config (Optional but recommended)
+.env
 appsettings.Development.json
 
 # Uploaded Assets

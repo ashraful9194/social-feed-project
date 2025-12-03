@@ -67,7 +67,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             setPostLikesMeta((prev) => ({
                 ...prev,
                 status: 'loaded',
-                users: response,
+                users: response.items,
                 error: null
             }));
         } catch (err) {
@@ -105,7 +105,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         try {
             setLoadingComments(true);
             const response = await postService.getComments(post.id);
-            setComments(sortCommentsDesc(response));
+            setComments(sortCommentsDesc(response.items));
         } catch (err) {
             console.error(err);
             setError(getErrorMessage(err));
@@ -224,7 +224,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 [commentId]: {
                     ...(prev[commentId] ?? createEmptyLikeMeta()),
                     status: 'loaded',
-                    users: response,
+                    users: response.items,
                     error: null,
                     visible: true
                 }
@@ -339,24 +339,24 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     const renderComments = (items: CommentResponse[], depth = 0) =>
         items.map((comment) => (
             <div key={comment.id} style={{ display: 'flex', flexDirection: 'column', marginBottom: 12, marginLeft: depth ? 20 : 0 }}>
-                
+
                 {/* Main Comment Row: Avatar + Bubble */}
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                    
+
                     {/* Avatar */}
-                    <img 
-                        src={comment.authorAvatar ?? DEFAULT_AVATAR} 
-                        alt={comment.authorName} 
-                        style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} 
+                    <img
+                        src={comment.authorAvatar ?? DEFAULT_AVATAR}
+                        alt={comment.authorName}
+                        style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }}
                     />
 
                     <div style={{ display: 'flex', flexDirection: 'column', maxWidth: 'calc(100% - 40px)' }}>
-                        
+
                         {/* The Grey "Bubble" */}
-                        <div style={{ 
+                        <div style={{
                             position: 'relative',
-                            backgroundColor: '#F0F2F5', 
-                            borderRadius: '18px', 
+                            backgroundColor: '#F0F2F5',
+                            borderRadius: '18px',
                             padding: '8px 12px',
                             display: 'inline-block',
                             color: '#050505'
@@ -397,7 +397,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                                         }}
                                     >
                                         <span style={{ backgroundColor: '#1877F2', borderRadius: '50%', padding: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14 }}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="#fff" width="8" height="8"><path d="M8.856.884c.834.332 1.58.917 1.63 1.956.12.392-.09.83-.24 1.205l-.01.026s-.066.155-.065.155c-.01.025-.018.05-.028.075.688.163 1.838.59 2.158 1.408.435 1.109-.17 2.396-1.125 2.873.344.474.349 1.157.067 1.62-.27.442-.857.702-1.342.805.122.427-.058.914-.37 1.21-.397.377-1.104.53-1.638.577h-.066c-.636.002-1.42.062-1.895-.298-.445-.337-.532-1.012-.662-1.573-.133-.572-.257-1.144-.73-1.503-.306-.233-.7-.272-1.077-.28h-1.6c-.653.003-1.16-.547-1.127-1.2l.065-2.613c.038-.642.59-1.14 1.233-1.127h.063c.277 0 .524-.094.707-.268.324-.308.384-.816.516-1.237.2-.644.59-1.42 1.163-1.84.77-.565 1.706-.39 2.378.026z"/></svg>
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="#fff" width="8" height="8"><path d="M8.856.884c.834.332 1.58.917 1.63 1.956.12.392-.09.83-.24 1.205l-.01.026s-.066.155-.065.155c-.01.025-.018.05-.028.075.688.163 1.838.59 2.158 1.408.435 1.109-.17 2.396-1.125 2.873.344.474.349 1.157.067 1.62-.27.442-.857.702-1.342.805.122.427-.058.914-.37 1.21-.397.377-1.104.53-1.638.577h-.066c-.636.002-1.42.062-1.895-.298-.445-.337-.532-1.012-.662-1.573-.133-.572-.257-1.144-.73-1.503-.306-.233-.7-.272-1.077-.28h-1.6c-.653.003-1.16-.547-1.127-1.2l.065-2.613c.038-.642.59-1.14 1.233-1.127h.063c.277 0 .524-.094.707-.268.324-.308.384-.816.516-1.237.2-.644.59-1.42 1.163-1.84.77-.565 1.706-.39 2.378.026z" /></svg>
                                         </span>
                                         <span style={{ color: '#65676B' }}>{comment.likesCount}</span>
                                     </div>
@@ -408,20 +408,20 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
                         {/* Action Row: Like, Reply, Date */}
                         <div style={{ display: 'flex', gap: 12, marginLeft: 12, marginTop: 4, fontSize: '12px', color: '#65676B' }}>
-                            <button 
-                                onClick={() => handleCommentLike(comment.id)} 
-                                style={{ 
-                                    border: 'none', 
-                                    background: 'none', 
-                                    padding: 0, 
-                                    fontWeight: 'bold', 
-                                    color: comment.isLikedByCurrentUser ? '#1877F2' : '#65676B', 
-                                    cursor: 'pointer' 
+                            <button
+                                onClick={() => handleCommentLike(comment.id)}
+                                style={{
+                                    border: 'none',
+                                    background: 'none',
+                                    padding: 0,
+                                    fontWeight: 'bold',
+                                    color: comment.isLikedByCurrentUser ? '#1877F2' : '#65676B',
+                                    cursor: 'pointer'
                                 }}
                             >
                                 Like
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setReplyDrafts((prev) => ({ ...prev, [comment.id]: prev[comment.id] ?? '' }))}
                                 style={{ border: 'none', background: 'none', padding: 0, fontWeight: 'bold', color: '#65676B', cursor: 'pointer' }}
                             >
@@ -436,21 +436,21 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 {/* Reply Input */}
                 {replyDrafts[comment.id] !== undefined && (
                     <div style={{ display: 'flex', gap: 8, marginTop: 8, paddingLeft: 40 }}>
-                         <img 
+                        <img
                             src={currentUserAvatar}
-                            alt={currentUser?.name ?? 'You'} 
-                            style={{ width: 24, height: 24, borderRadius: '50%' }} 
+                            alt={currentUser?.name ?? 'You'}
+                            style={{ width: 24, height: 24, borderRadius: '50%' }}
                         />
                         <div style={{ flex: 1 }}>
                             <input
                                 type="text"
-                                style={{ 
-                                    width: '100%', 
-                                    backgroundColor: '#F0F2F5', 
-                                    border: 'none', 
-                                    borderRadius: '18px', 
+                                style={{
+                                    width: '100%',
+                                    backgroundColor: '#F0F2F5',
+                                    border: 'none',
+                                    borderRadius: '18px',
                                     padding: '8px 12px',
-                                    fontSize: '14px' 
+                                    fontSize: '14px'
                                 }}
                                 autoFocus
                                 value={replyDrafts[comment.id]}
@@ -458,12 +458,12 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                                     setReplyDrafts((prev) => ({ ...prev, [comment.id]: event.target.value }))
                                 }
                                 onKeyDown={(e) => {
-                                    if(e.key === 'Enter') handleCreateComment(comment.id);
+                                    if (e.key === 'Enter') handleCreateComment(comment.id);
                                 }}
                                 placeholder={`Reply to ${comment.authorName}...`}
                             />
                             <div style={{ textAlign: 'right', marginTop: 4 }}>
-                                <small style={{ cursor: 'pointer', color: '#65676B' }} onClick={() => setReplyDrafts(prev => { const n = {...prev}; delete n[comment.id]; return n; })}>Cancel</small>
+                                <small style={{ cursor: 'pointer', color: '#65676B' }} onClick={() => setReplyDrafts(prev => { const n = { ...prev }; delete n[comment.id]; return n; })}>Cancel</small>
                             </div>
                         </div>
                     </div>
@@ -549,10 +549,10 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                                 <input
                                     type="text"
                                     className="form-control"
-                                    style={{ 
-                                        borderRadius: '20px', 
-                                        backgroundColor: '#F0F2F5', 
-                                        border: 'none', 
+                                    style={{
+                                        borderRadius: '20px',
+                                        backgroundColor: '#F0F2F5',
+                                        border: 'none',
                                         padding: '8px 12px',
                                         width: '100%'
                                     }}
@@ -560,7 +560,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                                     value={newComment}
                                     onChange={(event) => setNewComment(event.target.value)}
                                     onKeyDown={(e) => {
-                                        if(e.key === 'Enter') handleCreateComment();
+                                        if (e.key === 'Enter') handleCreateComment();
                                     }}
                                 />
                             </div>
@@ -568,7 +568,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                     </div>
 
                     {loadingComments && <p className="_mar_t12" style={{ paddingLeft: 24, fontSize: 13, color: '#666' }}>Loading comments...</p>}
-                    
+
                     {!loadingComments && comments.length > 0 && (
                         <div className="_timline_comment_main" style={{ marginTop: 20 }}>
                             {renderComments(comments)}

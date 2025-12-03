@@ -22,13 +22,15 @@ public class PostsController : ControllerBase
     /// Get the main feed of posts
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<List<PostResponse>>> GetFeed()
+    public async Task<ActionResult<PaginatedResponse<PostResponse>>> GetFeed(
+        [FromQuery] int limit = 20,
+        [FromQuery] int? cursor = null)
     {
         try
         {
-            var currentUserId = this.GetCurrentUserId();
-            var posts = await _postService.GetFeedAsync(currentUserId);
-            return Ok(posts);
+            var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var result = await _postService.GetFeedAsync(userId, limit, cursor);
+            return Ok(result);
         }
         catch (Exception ex)
         {
@@ -76,12 +78,12 @@ public class PostsController : ControllerBase
     /// Get users who liked a post
     /// </summary>
     [HttpGet("{postId}/likes")]
-    public async Task<ActionResult<List<LikeUserResponse>>> GetPostLikes(int postId)
+    public async Task<ActionResult<PaginatedResponse<LikeUserResponse>>> GetPostLikes(int postId, [FromQuery] int limit = 20, [FromQuery] int? cursor = null)
     {
         try
         {
             var currentUserId = this.GetCurrentUserId();
-            var likes = await _postService.GetPostLikesAsync(postId, currentUserId);
+            var likes = await _postService.GetPostLikesAsync(postId, currentUserId, limit, cursor);
             return Ok(likes);
         }
         catch (Exception ex)
@@ -94,12 +96,12 @@ public class PostsController : ControllerBase
     /// Get comments for a post
     /// </summary>
     [HttpGet("{postId}/comments")]
-    public async Task<ActionResult<List<CommentResponse>>> GetComments(int postId)
+    public async Task<ActionResult<PaginatedResponse<CommentResponse>>> GetComments(int postId, [FromQuery] int limit = 20, [FromQuery] int? cursor = null)
     {
         try
         {
             var currentUserId = this.GetCurrentUserId();
-            var comments = await _postService.GetCommentsAsync(postId, currentUserId);
+            var comments = await _postService.GetCommentsAsync(postId, currentUserId, limit, cursor);
             return Ok(comments);
         }
         catch (Exception ex)
@@ -148,12 +150,12 @@ public class PostsController : ControllerBase
     /// Get users who liked a comment
     /// </summary>
     [HttpGet("~/api/comments/{commentId}/likes")]
-    public async Task<ActionResult<List<LikeUserResponse>>> GetCommentLikes(int commentId)
+    public async Task<ActionResult<PaginatedResponse<LikeUserResponse>>> GetCommentLikes(int commentId, [FromQuery] int limit = 20, [FromQuery] int? cursor = null)
     {
         try
         {
             var currentUserId = this.GetCurrentUserId();
-            var likes = await _postService.GetCommentLikesAsync(commentId, currentUserId);
+            var likes = await _postService.GetCommentLikesAsync(commentId, currentUserId, limit, cursor);
             return Ok(likes);
         }
         catch (Exception ex)
