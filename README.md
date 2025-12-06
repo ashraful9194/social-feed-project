@@ -83,5 +83,59 @@ The application will be available at `http://localhost:5173`.
 ### Frontend
 - Environment variables are managed via `.env` files (e.g., API base URL).
 
-## 📄 License
+## � Entity Relationship Diagram
+
+```mermaid
+erDiagram
+    User ||--o{ Post : "creates"
+    User ||--o{ Comment : "writes"
+    User ||--o{ PostLike : "likes"
+    User ||--o{ CommentLike : "likes"
+    
+    Post ||--o{ Comment : "has"
+    Post ||--o{ PostLike : "has"
+    
+    Comment ||--o{ CommentLike : "has"
+    Comment ||--o{ Comment : "replies to"
+
+    User {
+        int Id PK
+        string Email
+        string PasswordHash
+        string FirstName
+        string LastName
+        string ProfileImageUrl
+        datetime CreatedAt
+    }
+
+    Post {
+        int Id PK
+        int UserId FK
+        string Content
+        string ImageUrl
+        bool IsPrivate
+        datetime CreatedAt
+    }
+
+    Comment {
+        int Id PK
+        int PostId FK
+        int UserId FK
+        int ParentCommentId FK "Nullable"
+        string Content
+        datetime CreatedAt
+    }
+
+    PostLike {
+        int PostId PK, FK
+        int UserId PK, FK
+    }
+
+    CommentLike {
+        int CommentId PK, FK
+        int UserId PK, FK
+    }
+```
+
+## �📄 License
 This project is available for use and modification.
